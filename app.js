@@ -52,6 +52,7 @@ const authenticated_menu=[
     {label:"Admin Tools",id:"menu2", roles:["manager","owner","administrator"], menu:[
         {label:"Update User",function:"update_user()",panel:"update_user"},
     ]},
+    {label:"Daily Task List",function:"navigate({fn:'show_tasks'})"},
 
 ]
 
@@ -91,13 +92,70 @@ function get_user_name(){log(2,arguments,filename,get_user_name)
 }
 
 
-async function show_tasks(store){
+
+async function show_tasks(){
     // To be built during workshop
+
+    hide_menu()
+
+    tag("canvas").innerHTML=`
+    <div class="page">
+        <h2>Task List</h2>
+        <div id="task_list_panel">
+        <i class="fas fa-spinner fa-pulse"></i>
+        </div>
+    </div>
+    `
+    //request the task list from airtable through google apps script
+    const response=await server_request({
+        mode:"get_tasks"
+    })
+
+    if(response.status==="success"){
+        //we have the data and display it
+        //tag("task_list_panel").innerHTML = "Task list was retrieved"
+        //create html table to store the data
+
+        const html = ['<table border="1"><tr>']
+
+        //build the header row of the table
+        html.push('<th>Task</th>')
+        html.push('<th>Details</th>')
+        html.push('<th>Complete?</th>')
+        html.push('<th>Action</th>')
+        html.push('</tr>')
+
+        for(const record of response.records){
+            html.push('<tr>')
+            html.push(`<td>${record.fields.id}</td>`)
+            html.push(`<td>${record.fields.details}</td>`)
+            html.push(`<td>${record.fields.completed}</td>`)
+            html.push(`<td><a class="tools" onclick="record_task('${record.id}')">Mark as Complete</a></td>`)
+            html.push('</tr>')
+        }
+
+
+        tag("task_list_panel").innerHTML = html.join("")
+
+
+    }else{
+        //we received an error
+        tag("task_list_panel").innerHTML = "There was an error retrieving the task list"
+
+    }
+
+
+
 }
 
 
-async function record_task(button){
+async function record_task(record_id){
     // To be built during workshop
+    console.log('in record_task')
+    const response = await server_request({
+        mode:"record_task_done", id: record_id
+    })
+    show_tasks()
 }
 
 
